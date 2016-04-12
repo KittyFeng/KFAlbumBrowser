@@ -9,11 +9,6 @@
 #import <UIKit/UIKit.h>
 #import "KFPhoto.h"
 
-//typedef NS_ENUM(NSUInteger,KFPhotoAnimationType) {
-//    KFPhotoAnimationTypeNone = 1,
-//    KFPhotoAnimationAppear = 2,
-//    KFPhotoAnimationDisappear = 3,
-//};
 
 @class KFPhotoViewer;
 
@@ -29,14 +24,15 @@
 @property (nonatomic,readonly) UIImageView *imageView;
 @property (nonatomic,weak) id <KFPhotoViewerDelegate> vDelegate;
 
-//@property (nonatomic) BOOL animationEnabled;
 
-//- (instancetype)initWithFrame:(CGRect)frame
-//                        photo:(KFPhoto *)photo
-//                showAnimation:(BOOL)animation;
 
-- (void)makeAnimationWithImage:(UIImage *)largeImage fromRect:(CGRect)rect;
+- (void)makeAnimationWithImage:(UIImage *)largeImage
+                   contentMode:(UIViewContentMode)contentMode
+                      fromRect:(CGRect)rect;
 
+- (void)dismissToRect:(CGRect)rect;
+
+    
 - (void)setImage:(UIImage *)image isLoading:(BOOL)isLoading;
 
 - (void)scaleToOriginalSize;

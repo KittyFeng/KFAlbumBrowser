@@ -25,6 +25,7 @@
 {
     self = [super init];
     if (self) {
+        self.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
         _hasBottomBar = NO;
         _hideStatusBar = YES;
         _startIndex = 0;
@@ -61,13 +62,12 @@
     self.scrollView = [[UIScrollView alloc]initWithFrame:frame];
     
     self.scrollView.contentSize = CGSizeMake(self.photos.count * imageWidth, imageHeight);
-    self.scrollView.backgroundColor = [UIColor orangeColor];
     [self.view addSubview:self.scrollView];
 
     for (NSUInteger i = 0; i < self.photos.count; i ++) {
         KFPhotoViewer *photoViewer = [[KFPhotoViewer alloc]initWithFrame:CGRectMake(i* imageWidth, 0, imageWidth, imageHeight)];
         photoViewer.vDelegate = self;
-        photoViewer.backgroundColor = [UIColor brownColor];
+        photoViewer.backgroundColor = [UIColor blackColor];
         [self.scrollView addSubview:photoViewer];
         [self.photoViewerArray addObject:photoViewer];
     }
@@ -82,8 +82,8 @@
     if (startPhoto.largeImage) {
         KFPhotoViewer *photoViewer = self.photoViewerArray[_startIndex];
         if (!CGRectIsEmpty(startPhoto.originalFrame)) {
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                [photoViewer makeAnimationWithImage:startPhoto.largeImage fromRect:startPhoto.originalFrame];
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [photoViewer makeAnimationWithImage:startPhoto.largeImage contentMode:UIViewContentModeScaleToFill fromRect:startPhoto.originalFrame];
             });
             
         }else{
@@ -171,7 +171,12 @@
 
 #pragma mark - KFPhotoViewer delegate
 - (void)tapPhotoViewer:(KFPhotoViewer *)photoViewer{
-    [self dismissViewControllerAnimated:NO completion:nil];
+    KFPhoto *photo = self.photos[self.curIndex];
+    [photoViewer dismissToRect:photo.originalFrame];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.4 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [self dismissViewControllerAnimated:NO completion:nil];
+    });
+    
 }
 
 

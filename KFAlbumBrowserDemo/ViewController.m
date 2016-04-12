@@ -36,9 +36,9 @@
     KFAlbumBrowser *album = [[KFAlbumBrowser alloc]init];
     KFPhoto *photo = [[KFPhoto alloc]init];
     photo.largeImage = _imageView.image;
-    photo.originalFrame = self.imageView.frame;
+    photo.originalFrame = [self.view convertRect:self.imageView.frame toView:nil];
     album.photos = @[photo];
-    [self presentViewController:album animated:NO completion:nil];
+    [self presentViewController:album animated:YES completion:nil];
 }
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];

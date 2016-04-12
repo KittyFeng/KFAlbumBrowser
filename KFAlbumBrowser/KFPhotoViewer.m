@@ -11,10 +11,6 @@
 #import "UIImageView+WebCache.h"
 #import "SDImageCache.h"
 
-//typedef NS_ENUM(NSUInteger,ImageMode){
-//    ImageModeLoading = 1,
-//    ImageModeFinishLoading = 2,
-//};
 
 @interface KFPhotoViewer ()<UIScrollViewDelegate>{
     
@@ -24,41 +20,17 @@
 }
 
 @property (nonatomic,readwrite) UIImageView *imageView;
-//@property (nonatomic) KFPhoto *photo;
 @property (nonatomic,assign) BOOL animation;
-//@property ImageMode imageMode;
+
 
 @property (nonatomic,assign) BOOL isLoading;
 
+@property (nonatomic,assign) UIViewContentMode imageMode;
 
 
 @end
 
 @implementation KFPhotoViewer
-
-//- (instancetype)initWithFrame:(CGRect)frame{
-//    return [self initWithFrame:frame
-//                         photo:nil
-//                 showAnimation:YES];
-//}
-//
-//
-//- (instancetype)initWithFrame:(CGRect)frame
-//                        photo:(KFPhoto *)photo
-//                showAnimation:(BOOL)animation{
-//    if (self = [super initWithFrame:frame]) {
-//        _photo = photo;
-//        _animation = animation;
-//
-//        [self setup];
-//        
-//        [self addImageView];
-//        
-//        [self loadPhoto:_photo];
-//    }
-//    return self;
-//}
-
 
 - (instancetype)initWithFrame:(CGRect)frame
 {
@@ -78,8 +50,9 @@
 
 - (void)addImageView{
     _imageView = [[UIImageView alloc]initWithFrame:CGRectZero];
-    _imageView.contentMode = UIViewContentModeScaleAspectFit;
-    _imageView.backgroundColor = [UIColor grayColor];
+    _imageMode = UIViewContentModeScaleAspectFit;
+    _imageView.contentMode = _imageMode;
+    _imageView.backgroundColor = [UIColor clearColor];
     [self addSubview:_imageView];
     
     UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(photoTap)];
@@ -93,15 +66,21 @@
     }
 }
 
-- (void)makeAnimationWithImage:(UIImage *)largeImage fromRect:(CGRect)rect{
-    self.imageView.frame = rect;
-    self.imageView.image = largeImage;
-    
-    [UIView animateWithDuration:0.3 delay:0 options:UIViewAnimationOptionCurveEaseOut animations:^{
-        self.imageView.frame = [self getRightFrameOfImage:largeImage InRect:self.bounds];
-    } completion:nil];
-}
 
+- (void)makeAnimationWithImage:(UIImage *)largeImage
+                   contentMode:(UIViewContentMode)contentMode
+                      fromRect:(CGRect)rect{
+    
+    self.imageView.frame = [self convertRect:rect fromView:nil];
+    self.imageView.image = largeImage;
+    self.imageMode = contentMode;
+    self.imageView.contentMode = contentMode;
+    
+    CGRect newFrame = [self getRightFrameOfImage:largeImage InRect:self.bounds];
+    
+    [self resizePhotoToRect:newFrame contentMode:UIViewContentModeScaleAspectFit animation:nil completion:nil];
+    
+}
 
 
 
@@ -118,55 +97,24 @@
 - (void)setLoadingImage:(UIImage *)image{
     _isLoading = YES;
     self.imageView.image = image;
-    [self resizePhotoToRect:[self getThumbnailRect] animation:NO];
+    self.imageView.frame = [self getThumbnailRect];
 }
 
 - (void)setLargeImage:(UIImage *)image{
-    BOOL animation = _isLoading;
     self.imageView.image = image;
-    [self resizePhotoToRect:[self getThumbnailRect] animation:animation];
+    
+    CGRect newFrame = [self getRightFrameOfImage:image InRect:self.bounds];
+    if (_isLoading) {
+        [self resizePhotoToRect:newFrame contentMode:UIViewContentModeScaleAspectFit animation:nil completion:nil];
+    }else{
+        self.imageView.frame = newFrame;
+    }
     _isLoading = NO;
-
 }
 
 - (CGRect)getThumbnailRect{
     return CGRectMake(self.center.x - 50, self.center.y - 50, 100, 100);
 }
-
-// deal with exist large image, return yes if it exists
-- (BOOL)getExistLargeImage:(KFPhoto *)photo{
-    if (photo.largeImage) {
-        return  YES;
-    }else{
-        if (photo.largeUrl.length) {
-            BOOL exist = [[SDWebImageManager sharedManager]diskImageExistsForURL:[NSURL URLWithString:photo.largeUrl]];
-            if (exist) {
-                photo.largeImage = [[SDImageCache sharedImageCache]imageFromDiskCacheForKey:[NSURL URLWithString:photo.largeUrl].absoluteString];
-            }
-            return exist;
-        }
-        return NO;
-    }
-}
-
-//- (void)showImage{
-//    if (self.imageMode == ImageModeFinishLoading) {
-//        [self resetImage:self.photo.largeImage inView:self];
-//    }else{
-//        [[SDWebImageManager sharedManager]downloadImageWithURL:[NSURL URLWithString:self.photo.largeUrl] options:SDWebImageRetryFailed progress:^(NSInteger receivedSize, NSInteger expectedSize) {
-//            CGFloat complete = 0;
-//            if (expectedSize>0) {
-//                complete = receivedSize/expectedSize;
-//            }
-//            [self setLoadingSate:complete];
-//        } completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished, NSURL *imageURL) {
-//            self.photo.largeImage = image;
-//            [self setFinishLoadingState];
-//        }];
-//    }
-//}
-
-
 
 
 
@@ -190,95 +138,40 @@
     return rightFrame;
 }
 
-//- (void)resizePhotoToSize:(CGSize )size animation:(BOOL)animation{
-//    CGRect newFrame = CGRectMake(self.center.x - size.width/2.0, self.center.y - size.height/2.0, size.width, size.height);
-//    [self resizePhotoToRect:newFrame animation:animation];
-//}
 
-- (void)resizePhotoToRect:(CGRect )frame animation:(BOOL)animation{
-    if(animation){
+- (void)resizePhotoToRect:(CGRect )frame contentMode:(UIViewContentMode)contentMode animation:(void (^)(void))animation completion:(void (^)(void))completion{
+    if(!animation){
         self.imageView.frame = frame;
     }else{
-        [UIView animateWithDuration:1.f delay:0 options:UIViewAnimationOptionCurveEaseOut animations:^{
+        [UIView animateWithDuration:0.4 delay:0 options:UIViewAnimationOptionCurveEaseInOut animations:^{
+            self.imageView.contentMode = contentMode;
             self.imageView.frame = frame;
-        } completion:nil];
+            if (animation) {
+                animation();
+            }
+        } completion:^(BOOL finished) {
+            if (finished) {
+                if (completion) {
+                     completion();
+                }
+            }
+        }];
     }
 }
 
-//- (void)loadPhoto:(KFPhoto *)photo{
-//    
-//    if (!photo||(!photo.largeUrl&&!photo.largeImage)) {
-//        return;
-//    }
-//    
-//    BOOL existLargeImage = [self getExistLargeImage:photo];
-//    
-//    if (existLargeImage) {
-//        [self setFinishLoadingState];
-//    }else{
-//        [self setLoadingSate:0];
-//        
-//    }
-//
-//}
-
-
-//- (void)setFinishLoadingState{
-//    self.imageMode = ImageModeFinishLoading;
-//    [self unlockZoom];
-//}
-//
-//
-//- (void)setLoadingSate:(CGFloat)progress{
-//    self.imageMode = ImageModeLoading;
-//    [self lockZoom];
-//}
-
-
-//
-//- (void)previewImageWithPhoto:(KFPhoto *)photo{
-//    if (photo.largeImage) {
-//        return;
-//    }
-//    
-//    if (photo.thumbImage) {
-//        //deal with preview
-//    }
-//}
 
 
 
 
+- (void)dismissToRect:(CGRect)rect{
+    [self resizePhotoToRect:[self convertRect:rect fromView:nil] contentMode:self.imageMode animation:^{
+        self.imageView.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0];
+    } completion:nil];
+}
 
-//- (void)resetImage:(UIImage *)image inView:(UIView *)superView{
-//    
-//    CGFloat height = superView.frame.size.height;
-//    CGFloat width = superView.frame.size.width;
-//    
-//    CGFloat imageWidth = image.size.width;
-//    CGFloat imageHeight = image.size.height;
-//   
-//    if (imageHeight/imageWidth > height/width) {
-//        CGFloat newWidth = (imageWidth/imageHeight)*height;
-//        _imageView.frame = CGRectMake(width/2.0-newWidth/2.0, 0, newWidth, height);
-//    }else{
-//        CGFloat newHeight = (imageHeight/imageWidth)*width;
-//        _imageView.frame = CGRectMake(0, height/2.0 -newHeight/2.0 , width, newHeight);
-//    }
-//    
-//    _imageView.image = image;
-//    
-//}
-
-//- (void)setPhoto:(KFPhoto *)photo{
-//    _photo = photo;
-//    [self loadPhoto:photo];
-//}
-//
-//
-//- (void)scaleToOriginalSize{
-//    self.zoomScale = 1;
-//}
+- (void)scaleToOriginalSize{
+    self.zoomScale = 1;
+}
 
 #pragma mark - scroll view delegate
 
