@@ -43,9 +43,20 @@
 }
 
 - (void)setup{
-    maxZoomScale = 10;
+    maxZoomScale = 2;
     minZoomScale = 1;
     self.delegate = self;
+    self.backgroundColor = [UIColor blackColor];
+    
+    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(photoTap)];
+    tap.numberOfTapsRequired = 1;
+    tap.numberOfTouchesRequired = 1;
+    [self addGestureRecognizer:tap];
+    
+    UITapGestureRecognizer *doubleTap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(zoomInAndOut:)];
+    doubleTap.numberOfTapsRequired = 2;
+    doubleTap.numberOfTouchesRequired = 1;
+    [self addGestureRecognizer:doubleTap];
 }
 
 - (void)addImageView{
@@ -53,11 +64,8 @@
     _imageMode = UIViewContentModeScaleAspectFit;
     _imageView.contentMode = _imageMode;
     _imageView.backgroundColor = [UIColor clearColor];
+    _imageView.userInteractionEnabled = YES;
     [self addSubview:_imageView];
-    
-    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(photoTap)];
-    self.imageView.userInteractionEnabled = YES;
-    [self.imageView addGestureRecognizer:tap];
 }
 
 - (void)photoTap{
@@ -66,6 +74,15 @@
     }
 }
 
+
+- (void)zoomInAndOut:(UIGestureRecognizer *)doubleTap{
+    if (self.zoomScale == 1) {
+        CGPoint point = [doubleTap locationInView:self];
+        [self zoomToRect:CGRectMake(point.x-40, point.y-40 , 80, 80) animated:YES];
+    }else{
+        self.zoomScale = 1;
+    }
+}
 
 - (void)makeAnimationWithImage:(UIImage *)largeImage
                    contentMode:(UIViewContentMode)contentMode
@@ -78,7 +95,11 @@
     
     CGRect newFrame = [self getRightFrameOfImage:largeImage InRect:self.bounds];
     
-    [self resizePhotoToRect:newFrame contentMode:UIViewContentModeScaleAspectFit animation:nil completion:nil];
+    [self resizePhotoToRect:newFrame contentMode:UIViewContentModeScaleAspectFit animation:^{
+        self.backgroundColor = [UIColor blackColor];
+    } completion:^{
+        [self unlockZoom];
+    }];
     
 }
 
@@ -88,8 +109,10 @@
 - (void)setImage:(UIImage *)image isLoading:(BOOL)isLoading{
     if (isLoading) {
         [self setLoadingImage:image];
+        [self lockZoom];
     }else{
         [self setLargeImage:image];
+        [self unlockZoom];
     }
 }
 
@@ -140,23 +163,21 @@
 
 
 - (void)resizePhotoToRect:(CGRect )frame contentMode:(UIViewContentMode)contentMode animation:(void (^)(void))animation completion:(void (^)(void))completion{
-    if(!animation){
+    
+    [UIView animateWithDuration:0.3 delay:0 options:UIViewAnimationOptionCurveEaseOut animations:^{
+        self.imageView.contentMode = contentMode;
         self.imageView.frame = frame;
-    }else{
-        [UIView animateWithDuration:0.4 delay:0 options:UIViewAnimationOptionCurveEaseInOut animations:^{
-            self.imageView.contentMode = contentMode;
-            self.imageView.frame = frame;
-            if (animation) {
-                animation();
+        if (animation) {
+            animation();
+        }
+    } completion:^(BOOL finished) {
+        if (finished) {
+            if (completion) {
+                 completion();
             }
-        } completion:^(BOOL finished) {
-            if (finished) {
-                if (completion) {
-                     completion();
-                }
-            }
-        }];
-    }
+        }
+    }];
+    
 }
 
 
@@ -165,7 +186,7 @@
 
 - (void)dismissToRect:(CGRect)rect{
     [self resizePhotoToRect:[self convertRect:rect fromView:nil] contentMode:self.imageMode animation:^{
-        self.imageView.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0];
+        self.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0];
     } completion:nil];
 }
 

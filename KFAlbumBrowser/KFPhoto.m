@@ -11,14 +11,14 @@
 @implementation KFPhoto
 
 - (instancetype)initWithOriginalFrame:(CGRect)originalFrame
-                             thumbUrl:(NSString *)thumbUrl
-                             largeUrl:(NSString *)largeUrl
                            thumbImage:(UIImage *)thumbImage
+                             largeUrl:(NSString *)largeUrl
 {
     self = [super init];
     if (self) {
         _largeUrl = largeUrl;
         _originalFrame = originalFrame;
+        _thumbImage = thumbImage;
     }
     return self;
 }

@@ -10,8 +10,12 @@
 #import "SDWebImageManager.h"
 #import "SDImageCache.h"
 #import "KFPhotoViewer.h"
+#import "KFPresentAnimationController.h"
+#import "KFDismissAnimationController.h"
 
-@interface KFAlbumBrowser ()<UIScrollViewDelegate,KFPhotoViewerDelegate>
+@interface KFAlbumBrowser ()<UIScrollViewDelegate,KFPhotoViewerDelegate,UIViewControllerTransitioningDelegate>{
+    CGFloat lastOffset;
+}
 
 @property (nonatomic) UIScrollView *scrollView;
 @property (nonatomic) UIPageControl *pageControl;
@@ -25,10 +29,13 @@
 {
     self = [super init];
     if (self) {
-        self.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
+//        self.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
+        self.modalPresentationStyle = UIModalPresentationCustom;
+        self.transitioningDelegate = self;
         _hasBottomBar = NO;
         _hideStatusBar = YES;
         _startIndex = 0;
+        _curIndex = _startIndex;
         _photoViewerArray = [NSMutableArray array];
     }
     return self;
@@ -62,12 +69,13 @@
     self.scrollView = [[UIScrollView alloc]initWithFrame:frame];
     
     self.scrollView.contentSize = CGSizeMake(self.photos.count * imageWidth, imageHeight);
+    self.scrollView.pagingEnabled = YES;
+    self.scrollView.delegate = self;
     [self.view addSubview:self.scrollView];
 
     for (NSUInteger i = 0; i < self.photos.count; i ++) {
         KFPhotoViewer *photoViewer = [[KFPhotoViewer alloc]initWithFrame:CGRectMake(i* imageWidth, 0, imageWidth, imageHeight)];
         photoViewer.vDelegate = self;
-        photoViewer.backgroundColor = [UIColor blackColor];
         [self.scrollView addSubview:photoViewer];
         [self.photoViewerArray addObject:photoViewer];
     }
@@ -78,9 +86,12 @@
 }
 
 - (void)showStartImage{
+    _curIndex = _startIndex;
     KFPhoto *startPhoto = self.photos[_startIndex];
+    KFPhotoViewer *photoViewer = self.photoViewerArray[_startIndex];
+    lastOffset = photoViewer.frame.size.width*_startIndex;
+    self.scrollView.contentOffset = CGPointMake(lastOffset, 0);
     if (startPhoto.largeImage) {
-        KFPhotoViewer *photoViewer = self.photoViewerArray[_startIndex];
         if (!CGRectIsEmpty(startPhoto.originalFrame)) {
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                 [photoViewer makeAnimationWithImage:startPhoto.largeImage contentMode:UIViewContentModeScaleToFill fromRect:startPhoto.originalFrame];
@@ -90,7 +101,7 @@
             [photoViewer setImage:startPhoto.largeImage isLoading:NO];
         }
     }else{
-        [self loadImageAtIndex:(NSUInteger)index];
+        [self loadImageAtIndex:(NSUInteger)_startIndex];
     }
 }
 
@@ -107,25 +118,45 @@
 }
 
 
-//- (NSUInteger)preIndex{
-//    NSUInteger pre = self.curIndex;
-//    if (pre == 0) {
-//        pre = self.photos.count - 1;
-//    }else{
-//        pre --;
-//    }
-//    return pre;
-//}
-//
-//- (NSUInteger)nextIndex{
-//    NSUInteger next = self.curIndex;
-//    if (next == self.photos.count) {
-//        next = 0;
-//    }else{
-//        next ++;
-//    }
-//    return next;
-//}
+- (void)setImageAtIndex:(NSUInteger)index{
+    KFPhoto *photo = self.photos[index];
+    KFPhotoViewer *photoViewer = self.photoViewerArray[index];
+    if (photo.largeImage) {
+        [photoViewer setImage:photo.largeImage isLoading:NO];
+    }else if (photo.largeUrl) {
+        [photoViewer setImage:photo.thumbImage isLoading:YES];
+        [[SDWebImageManager sharedManager]downloadImageWithURL:[NSURL URLWithString:photo.largeUrl] options:SDWebImageRetryFailed progress:^(NSInteger receivedSize, NSInteger expectedSize) {
+            //here loading progress
+        } completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished, NSURL *imageURL) {
+            [photoViewer setImage:image isLoading:NO];
+        }];
+    }
+    
+    
+    
+    
+}
+
+
+- (NSInteger)preIndex{
+    NSInteger pre = self.curIndex;
+    if (pre == 0) {
+        pre = -1;
+    }else{
+        pre --;
+    }
+    return pre;
+}
+
+- (NSInteger)nextIndex{
+    NSInteger next = self.curIndex;
+    if (next == self.photos.count - 1) {
+        next = -1;
+    }else{
+        next ++;
+    }
+    return next;
+}
 
 //photos setter
 - (void)setPhotos:(NSArray<KFPhoto *> *)photos{
@@ -174,10 +205,69 @@
     KFPhoto *photo = self.photos[self.curIndex];
     [photoViewer dismissToRect:photo.originalFrame];
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.4 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        [self dismissViewControllerAnimated:NO completion:nil];
+        [self dismissViewControllerAnimated:YES completion:nil];
     });
     
 }
+
+
+#pragma mark - UIViewControllerTransitioningDelegate
+- (nullable id <UIViewControllerAnimatedTransitioning>)animationControllerForPresentedController:(UIViewController *)presented presentingController:(UIViewController *)presenting sourceController:(UIViewController *)source{
+    KFPresentAnimationController *animationController = [[KFPresentAnimationController alloc]init];
+    animationController.duration = 0.3;
+    animationController.options = UIViewAnimationOptionCurveEaseOut;
+    return animationController;
+}
+
+
+- (nullable id <UIViewControllerAnimatedTransitioning>)animationControllerForDismissedController:(UIViewController *)dismissed{
+    KFDismissAnimationController *animationController = [[KFDismissAnimationController alloc]init];
+    animationController.duration = 0.3;
+    animationController.options = UIViewAnimationOptionCurveEaseOut;
+    return animationController;
+}
+
+
+#pragma mark - UIScrollView delegate
+
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView{
+    NSInteger index = -1;
+    if(scrollView.contentOffset.x - lastOffset > 0){
+        index = [self nextIndex];
+    }else if (scrollView.contentOffset.x - lastOffset < 0){
+        index = [self preIndex];
+    }
+    if (index >= 0 &&index!=_curIndex) {
+        [self setImageAtIndex:index];
+    }
+}
+
+- (void)scrollViewWillEndDragging:(UIScrollView *)scrollView withVelocity:(CGPoint)velocity targetContentOffset:(inout CGPoint *)targetContentOffset{
+    CGPoint point = *targetContentOffset;
+    NSUInteger page = point.x/scrollView.frame.size.width;
+    if (self.curIndex != page)
+    {
+        self.curIndex = page;
+//        [self setImageAtIndex:page];
+        
+    }
+}
+
+
+//- (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
+//{
+//    CGFloat pageWidth = scrollView.frame.size.width;
+//    NSInteger page = floor((scrollView.contentOffset.x - pageWidth / 2) / pageWidth) + 1; // page编号从0开始
+//    
+//    if (self.curIndex != page)
+//    {
+//        self.curIndex = page;
+//        [self setImageAtIndex:page];
+//
+//    }
+//}
+
+
 
 
 @end

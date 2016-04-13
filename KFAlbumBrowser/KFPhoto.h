@@ -14,6 +14,7 @@
 @property (nonatomic) UIImage *thumbImage;
 @property (nonatomic) NSString *largeUrl;
 @property (nonatomic) UIImage *largeImage;
+@property (nonatomic) UIViewContentMode contentMode;
 @property (nonatomic) CGRect originalFrame;
 
 
