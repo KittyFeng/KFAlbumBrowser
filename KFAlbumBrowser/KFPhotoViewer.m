@@ -20,12 +20,8 @@
 }
 
 @property (nonatomic,readwrite) UIImageView *imageView;
-@property (nonatomic,assign) BOOL animation;
-
-
 @property (nonatomic,assign) BOOL isLoading;
 
-@property (nonatomic,assign) UIViewContentMode imageMode;
 
 
 @end
@@ -61,8 +57,8 @@
 
 - (void)addImageView{
     _imageView = [[UIImageView alloc]initWithFrame:CGRectZero];
-    _imageMode = UIViewContentModeScaleAspectFit;
     _imageView.contentMode = _imageMode;
+    _imageMode = UIViewContentModeScaleAspectFit;
     _imageView.backgroundColor = [UIColor clearColor];
     _imageView.userInteractionEnabled = YES;
     [self addSubview:_imageView];
@@ -85,13 +81,10 @@
 }
 
 - (void)makeAnimationWithImage:(UIImage *)largeImage
-                   contentMode:(UIViewContentMode)contentMode
                       fromRect:(CGRect)rect{
     
     self.imageView.frame = [self convertRect:rect fromView:nil];
     self.imageView.image = largeImage;
-    self.imageMode = contentMode;
-    self.imageView.contentMode = contentMode;
     
     CGRect newFrame = [self getRightFrameOfImage:largeImage InRect:self.bounds];
     
@@ -136,7 +129,7 @@
 }
 
 - (CGRect)getThumbnailRect{
-    return CGRectMake(self.center.x - 50, self.center.y - 50, 100, 100);
+    return CGRectMake(self.bounds.size.width/2.0 - 50, self.bounds.size.height/2.0 - 80, 100, 100);
 }
 
 
@@ -185,7 +178,7 @@
 
 
 - (void)dismissToRect:(CGRect)rect{
-    [self resizePhotoToRect:[self convertRect:rect fromView:nil] contentMode:self.imageMode animation:^{
+    [self resizePhotoToRect:[self convertRect:rect fromView:nil] contentMode:self.contentMode animation:^{
         self.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0];
     } completion:nil];
 }
@@ -240,7 +233,12 @@
     
 }
 
+#pragma mark - setter
 
+- (void)setImageMode:(UIViewContentMode)imageMode{
+    self.imageView.contentMode = imageMode;
+    _imageMode = imageMode;
+}
 
 
 

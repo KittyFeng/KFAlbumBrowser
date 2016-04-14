@@ -1,26 +1,32 @@
 //
 //  KFAlbumBrowser.m
 //  KFAlbumBrowserDemo
-//
-//  Created by KittyFeng on 4/8/16.
+//  to see photos with infinte slides
+//  Created by KittyFeng on 4/14/16.
 //  Copyright © 2016 KittyFeng. All rights reserved.
 //
 
 #import "KFAlbumBrowser.h"
-#import "SDWebImageManager.h"
-#import "SDImageCache.h"
 #import "KFPhotoViewer.h"
-#import "KFPresentAnimationController.h"
-#import "KFDismissAnimationController.h"
+#import "SDWebImageManager.h"
+#import "UIImageView+WebCache.h"
 
-@interface KFAlbumBrowser ()<UIScrollViewDelegate,KFPhotoViewerDelegate,UIViewControllerTransitioningDelegate>{
+#define kMaxArrayCount 100000
+@interface  KFAlbumBrowser ()<UIScrollViewDelegate>{
     CGFloat lastOffset;
 }
 
-@property (nonatomic) UIScrollView *scrollView;
-@property (nonatomic) UIPageControl *pageControl;
-@property (nonatomic) NSMutableArray <KFPhotoViewer *>*photoViewerArray;
-@property (nonatomic,assign) NSUInteger curIndex;
+@property (nonatomic,strong) KFPhotoViewer *reusedPhotoViewer;
+//相册当前页
+@property (nonatomic,readwrite) NSUInteger page;
+//相册总相片数
+@property (nonatomic,readwrite) NSUInteger total;
+@property (nonatomic,strong) UIScrollView *scrollView;
+//当前持有的photos的index
+@property (nonatomic,assign) NSInteger curIndex;
+@property (nonatomic,strong) NSMutableArray *photoViewerArray;
+@property (nonatomic,assign) NSInteger targetIndex;
+@property (nonatomic,assign) BOOL rightDirection;
 @end
 
 @implementation KFAlbumBrowser
@@ -29,113 +35,102 @@
 {
     self = [super init];
     if (self) {
-//        self.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
-        self.modalPresentationStyle = UIModalPresentationCustom;
-        self.transitioningDelegate = self;
-        _hasBottomBar = NO;
-        _hideStatusBar = YES;
-        _startIndex = 0;
-        _curIndex = _startIndex;
-        _photoViewerArray = [NSMutableArray array];
+        _curIndex = 0;
     }
     return self;
 }
 
-- (void)viewWillAppear:(BOOL)animated{
-    [super viewWillAppear:animated];
-    
-}
-
-
 - (void)viewDidLoad{
     [super viewDidLoad];
     [self initViews];
-    [self showStartImage];
+    [self showFirstImage];
 }
-
 
 - (void)initViews{
-    CGRect frame = self.view.frame;
-    CGFloat bottomBarHeight = 44;
+    UIScrollView *scrollView = [[UIScrollView alloc]initWithFrame:self.view.bounds];
+    scrollView.backgroundColor = [UIColor blackColor];
+    scrollView.pagingEnabled = YES;
+    scrollView.delegate = self;
+    scrollView.contentSize = CGSizeMake(scrollView.frame.size.width*self.photos.count, scrollView.frame.size.height);
+    scrollView.contentOffset = CGPointMake(scrollView.frame.size.width*self.curIndex, 0);
+    self.scrollView = scrollView;
+    [self.view addSubview:scrollView];
     
-    if (self.hasBottomBar) {
-        CGFloat heihgt = frame.size.height - bottomBarHeight;
-        frame.size.height = heihgt;
-    }
-    
-    CGFloat imageWidth = frame.size.width;
-    CGFloat imageHeight = frame.size.height;
-    
-    self.scrollView = [[UIScrollView alloc]initWithFrame:frame];
-    
-    self.scrollView.contentSize = CGSizeMake(self.photos.count * imageWidth, imageHeight);
-    self.scrollView.pagingEnabled = YES;
-    self.scrollView.delegate = self;
-    [self.view addSubview:self.scrollView];
+    KFPhotoViewer *photoViewer = [[KFPhotoViewer alloc]initWithFrame:CGRectMake(scrollView.frame.size.width*self.curIndex, 0, scrollView.frame.size.width, scrollView.frame.size.height)];
+    [scrollView addSubview:photoViewer];
 
-    for (NSUInteger i = 0; i < self.photos.count; i ++) {
-        KFPhotoViewer *photoViewer = [[KFPhotoViewer alloc]initWithFrame:CGRectMake(i* imageWidth, 0, imageWidth, imageHeight)];
-        photoViewer.vDelegate = self;
-        [self.scrollView addSubview:photoViewer];
-        [self.photoViewerArray addObject:photoViewer];
-    }
-    
-    self.pageControl = [[UIPageControl alloc]initWithFrame:CGRectMake(0, imageHeight - 20, imageWidth, 20)];
-    [self.view addSubview:self.pageControl];
+}
+
+- (void)showFirstImage{
     
 }
 
-- (void)showStartImage{
-    _curIndex = _startIndex;
-    KFPhoto *startPhoto = self.photos[_startIndex];
-    KFPhotoViewer *photoViewer = self.photoViewerArray[_startIndex];
-    lastOffset = photoViewer.frame.size.width*_startIndex;
-    self.scrollView.contentOffset = CGPointMake(lastOffset, 0);
-    if (startPhoto.largeImage) {
-        if (!CGRectIsEmpty(startPhoto.originalFrame)) {
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                [photoViewer makeAnimationWithImage:startPhoto.largeImage contentMode:UIViewContentModeScaleToFill fromRect:startPhoto.originalFrame];
-            });
-            
-        }else{
-            [photoViewer setImage:startPhoto.largeImage isLoading:NO];
-        }
+
+#pragma mark - setter
+- (void)setPhotos:(NSMutableArray *)photos{
+    if(photos.count > kMaxArrayCount){
+        return;
+    }
+    _photos = photos;
+}
+
+
+
+
+#pragma mark - public methods
+
+- (void)appendPhotos:(NSArray *)photos{
+    if (photos.count > kMaxArrayCount) {
+        return;
+    }
+    NSUInteger contain = _photos.count + photos.count;
+    if (contain > kMaxArrayCount) {
+        NSUInteger exceed = contain - kMaxArrayCount;
+        [_photos removeObjectsInRange:NSMakeRange(0, exceed)];
+    }
+    [_photos addObjectsFromArray:photos];
+}
+
+
+- (void)insertPhotosInFront:(NSArray <NSString *>*)photos{
+    if (photos.count > kMaxArrayCount) {
+        return;
+    }
+    NSUInteger contain = _photos.count + photos.count;
+    _curIndex += photos.count;
+    if (contain > kMaxArrayCount){
+        NSUInteger exceed = contain - kMaxArrayCount;
+        [_photos removeObjectsInRange:NSMakeRange(_photos.count - exceed, exceed)];
+    }
+    [_photos insertObjects:photos atIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, photos.count)]];
+}
+
+
+#pragma mark - pravite methods
+
+- (void)downloadImageAroundIndex:(NSUInteger)curIndex{
+    NSInteger preIndex = [self preIndex];
+    if (preIndex < 0) {
+        [self loadPre];
     }else{
-        [self loadImageAtIndex:(NSUInteger)_startIndex];
+        [self loadImageAtIndex:[self preIndex]];
+    }
+    
+    NSInteger nextIndex = [self nextIndex];
+    if (nextIndex < 0 ) {
+        [self  loadAfter];
+    }else{
+        [self loadImageAtIndex:[self nextIndex]];
     }
 }
 
-
-- (void)loadImageAtIndex:(NSUInteger)index{
-    KFPhoto *photo = self.photos[index];
-    KFPhotoViewer *photoViewer = self.photoViewerArray[index];
-    [photoViewer setImage:photo.thumbImage isLoading:YES];
-    [[SDWebImageManager sharedManager]downloadImageWithURL:[NSURL URLWithString:photo.largeUrl] options:SDWebImageRetryFailed progress:^(NSInteger receivedSize, NSInteger expectedSize) {
-        //here loading progress
-    } completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished, NSURL *imageURL) {
-        [photoViewer setImage:image isLoading:NO];
-    }];
-}
-
-
-- (void)setImageAtIndex:(NSUInteger)index{
-    KFPhoto *photo = self.photos[index];
-    KFPhotoViewer *photoViewer = self.photoViewerArray[index];
-    if (photo.largeImage) {
-        [photoViewer setImage:photo.largeImage isLoading:NO];
-    }else if (photo.largeUrl) {
-        [photoViewer setImage:photo.thumbImage isLoading:YES];
-        [[SDWebImageManager sharedManager]downloadImageWithURL:[NSURL URLWithString:photo.largeUrl] options:SDWebImageRetryFailed progress:^(NSInteger receivedSize, NSInteger expectedSize) {
-            //here loading progress
-        } completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished, NSURL *imageURL) {
-            [photoViewer setImage:image isLoading:NO];
-        }];
+- (void)loadImageAtIndex:(NSInteger)index{
+    if (index < 0) {
+        return;
     }
-    
-    
-    
-    
+    [[SDWebImageManager sharedManager]downloadImageWithURL:[NSURL URLWithString:self.photos[index]] options:SDWebImageRetryFailed progress:nil completed:nil];
 }
+
 
 
 - (NSInteger)preIndex{
@@ -158,87 +153,31 @@
     return next;
 }
 
-//photos setter
-- (void)setPhotos:(NSArray<KFPhoto *> *)photos{
-    _photos = photos;
-    for (NSUInteger i = 0; i < photos.count; i++) {
-        KFPhoto *photo = photos[i];
-        
-        if (!photo.largeUrl&&!photo.largeImage) {
-            //fy-todo
-            return;
-        }
-        
-        BOOL existLargeImage = [self getExistLargeImage:photo];
-        
-        if (existLargeImage) {
-            //fy-todo
-            __block KFPhoto *photo;
-            [[SDWebImageManager sharedManager]downloadImageWithURL:[NSURL URLWithString:photo.largeUrl] options:SDWebImageRetryFailed progress:nil completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished, NSURL *imageURL) {
-                photo.largeImage = image;
-            }];
-        }
-    }
-}
 
-
-
-//judge if large image exists on disk or memory,and set the image it to photo model
-- (BOOL)getExistLargeImage:(KFPhoto *)photo{
-    if (photo.largeImage) {
-        return  YES;
-    }else{
-        if (photo.largeUrl.length) {
-            BOOL exist = [[SDWebImageManager sharedManager]diskImageExistsForURL:[NSURL URLWithString:photo.largeUrl]];
-            if (exist) {
-                photo.largeImage = [[SDImageCache sharedImageCache]imageFromDiskCacheForKey:[NSURL URLWithString:photo.largeUrl].absoluteString];
-            }
-            return exist;
-        }
-        return NO;
-    }
-}
-
-
-#pragma mark - KFPhotoViewer delegate
-- (void)tapPhotoViewer:(KFPhotoViewer *)photoViewer{
-    KFPhoto *photo = self.photos[self.curIndex];
-    [photoViewer dismissToRect:photo.originalFrame];
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.4 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        [self dismissViewControllerAnimated:YES completion:nil];
-    });
+//当访问数组以外的内容,delegate??
+- (void)loadPre{
     
 }
 
+- (void)loadAfter{
 
-#pragma mark - UIViewControllerTransitioningDelegate
-- (nullable id <UIViewControllerAnimatedTransitioning>)animationControllerForPresentedController:(UIViewController *)presented presentingController:(UIViewController *)presenting sourceController:(UIViewController *)source{
-    KFPresentAnimationController *animationController = [[KFPresentAnimationController alloc]init];
-    animationController.duration = 0.3;
-    animationController.options = UIViewAnimationOptionCurveEaseOut;
-    return animationController;
 }
-
-
-- (nullable id <UIViewControllerAnimatedTransitioning>)animationControllerForDismissedController:(UIViewController *)dismissed{
-    KFDismissAnimationController *animationController = [[KFDismissAnimationController alloc]init];
-    animationController.duration = 0.3;
-    animationController.options = UIViewAnimationOptionCurveEaseOut;
-    return animationController;
-}
-
 
 #pragma mark - UIScrollView delegate
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView{
     NSInteger index = -1;
     if(scrollView.contentOffset.x - lastOffset > 0){
+        self.rightDirection = YES;
         index = [self nextIndex];
     }else if (scrollView.contentOffset.x - lastOffset < 0){
+        self.rightDirection = NO;
         index = [self preIndex];
     }
-    if (index >= 0 &&index!=_curIndex) {
-        [self setImageAtIndex:index];
+
+    if (index >= 0 &&index!=_curIndex&&index!=_targetIndex) {
+        self.targetIndex = index;
+        [self addPhotoViewerAtIndex:index];
     }
 }
 
@@ -248,26 +187,51 @@
     if (self.curIndex != page)
     {
         self.curIndex = page;
-//        [self setImageAtIndex:page];
-        
     }
 }
 
 
-//- (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
-//{
-//    CGFloat pageWidth = scrollView.frame.size.width;
-//    NSInteger page = floor((scrollView.contentOffset.x - pageWidth / 2) / pageWidth) + 1; // page编号从0开始
-//    
-//    if (self.curIndex != page)
-//    {
-//        self.curIndex = page;
-//        [self setImageAtIndex:page];
-//
-//    }
-//}
+- (void)addPhotoViewerAtIndex:(NSInteger)index{
+    if (index < -1) {
+        return;
+    }
+    KFPhotoViewer *photoViewer = self.reusedPhotoViewer;
+    if (!photoViewer) {
+        photoViewer = [[KFPhotoViewer alloc]initWithFrame:CGRectMake(index*self.scrollView.frame.size.width, 0, self.scrollView.frame.size.width, self.scrollView.frame.size.height)];
+    }
+    
+    if (self.photoViewerArray.count >= 3) {
+        if (self.rightDirection) {
+            self.reusedPhotoViewer = self.photoViewerArray[0];
+            [self.reusedPhotoViewer removeFromSuperview];
+            [self.photoViewerArray removeObjectAtIndex:0];
+        }else{
+            self.reusedPhotoViewer = self.photoViewerArray.lastObject;
+            [self.reusedPhotoViewer removeFromSuperview];
+            [self.photoViewerArray removeLastObject];
+        }
+        
+    }
+    [self.photoViewerArray addObject:photoViewer];
+    [self.scrollView addSubview:photoViewer];
+    
+}
 
-
+- (void)setImageUrl:(NSString *)url inPhotoViewer:(KFPhotoViewer *)photoViewer{
+    [photoViewer setImage:nil isLoading:YES];
+    [[SDWebImageManager sharedManager]downloadImageWithURL:[NSURL URLWithString:url] options:SDWebImageRetryFailed progress:^(NSInteger receivedSize, NSInteger expectedSize) {
+        //here loading progress
+    } completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished, NSURL *imageURL) {
+        //cancel loading
+        if (image&&finished) {
+            [photoViewer setImage:image isLoading:NO];
+        }else{
+            //show failure
+            [photoViewer setImage:nil isLoading:NO];
+        }
+        
+    }];
+}
 
 
 @end

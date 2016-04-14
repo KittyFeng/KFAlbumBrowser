@@ -23,11 +23,10 @@
 
 @property (nonatomic,readonly) UIImageView *imageView;
 @property (nonatomic,weak) id <KFPhotoViewerDelegate> vDelegate;
-
+@property (nonatomic,assign) UIViewContentMode imageMode;
 
 
 - (void)makeAnimationWithImage:(UIImage *)largeImage
-                   contentMode:(UIViewContentMode)contentMode
                       fromRect:(CGRect)rect;
 
 - (void)dismissToRect:(CGRect)rect;

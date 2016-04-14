@@ -9,7 +9,7 @@
 #import "ViewController.h"
 #define imageUrl @"http://123.57.33.218/ayr_odeum/file/music/picture/97dcbd99b380484fb14dedcc132566cf.jpg"
 #import "UIImageView+WebCache.h"
-#import "KFAlbumBrowser.h"
+#import "KFPhotosBrowser.h"
 #import "KFPhoto.h"
 
 
@@ -46,7 +46,7 @@
 
 
 - (void)openImage{
-    KFAlbumBrowser *album = [[KFAlbumBrowser alloc]init];
+    KFPhotosBrowser *album = [[KFPhotosBrowser alloc]init];
     KFPhoto *photo1 = [[KFPhoto alloc]init];
     photo1.largeImage = _imageView.image;
     photo1.originalFrame = [self.view convertRect:self.imageView.frame toView:nil];
@@ -74,7 +74,7 @@
 //    [self presentViewController:album animated:YES completion:nil];
     
     
-    KFAlbumBrowser *album = [[KFAlbumBrowser alloc]init];
+    KFPhotosBrowser *album = [[KFPhotosBrowser alloc]init];
     KFPhoto *photo = [[KFPhoto alloc]init];
     photo.contentMode = UIViewContentModeScaleToFill;
     photo.thumbImage = _imageView2.image;
