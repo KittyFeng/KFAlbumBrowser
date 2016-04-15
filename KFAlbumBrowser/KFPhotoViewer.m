@@ -65,6 +65,9 @@
 }
 
 - (void)photoTap{
+    if (self.tapBlock) {
+        self.tapBlock(self);
+    }
     if ([self.vDelegate respondsToSelector:@selector(tapPhotoViewer:)]) {
         [self.vDelegate tapPhotoViewer:self];
     }
@@ -177,9 +180,11 @@
 
 
 
-- (void)dismissToRect:(CGRect)rect{
+- (void)dismissToRect:(CGRect)rect animation:(void (^)(void))animation{
     [self resizePhotoToRect:[self convertRect:rect fromView:nil] contentMode:self.contentMode animation:^{
         self.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0];
+        self.superview.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0];
+        animation();
     } completion:nil];
 }
 

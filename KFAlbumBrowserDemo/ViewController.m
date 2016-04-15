@@ -11,82 +11,67 @@
 #import "UIImageView+WebCache.h"
 #import "KFPhotosBrowser.h"
 #import "KFPhoto.h"
-
+#import "KFPhotosController.h"
 
 @interface ViewController ()
-@property (nonatomic) UIImageView *imageView;
-@property (nonatomic) UIImageView *imageView2;
+
+@property (nonatomic) NSArray <NSString *> *smallURLArr;
+@property (nonatomic) NSArray <NSString *> *largeURLArr;
+@property (nonatomic) NSMutableArray <UIImageView *>*imageArray;
+
 @end
 
 @implementation ViewController
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.imageView = [[UIImageView alloc]initWithFrame:CGRectMake(100, 100, 100, 100)];
-    [self.view addSubview:self.imageView];
-    [self.imageView sd_setImageWithURL:[NSURL URLWithString:imageUrl]];
+    self.smallURLArr = @[@"http://c.hiphotos.baidu.com/ting/pic/item/b03533fa828ba61ec79abd0b4334970a304e5999.jpg",@"http://c.hiphotos.baidu.com/ting/pic/item/b03533fa828ba61ec79abd0b4334970a304e5999.jpg",@"http://c.hiphotos.baidu.com/ting/pic/item/b03533fa828ba61ec79abd0b4334970a304e5999.jpg",@"http://friendq-10009900.image.myqcloud.com/fateship/bc/74/c7ece1d964db164599a59eb7a131/pic/1460515448_8042853.jpg",@"http://img.qiuyuehui.com/qyh/b9/1/d29/88c/86d/ec7/a77/29f/3db/c9e/a90/e20okb/50037da8-8b8d-4b3f-90b3-0aa29ed378e5.png"];
+    self.largeURLArr = @[@"http://a.hiphotos.baidu.com/ting/pic/item/09fa513d269759eecc4015efb0fb43166d22df86.jpg",@"http://a.hiphotos.baidu.com/ting/pic/item/09fa513d269759eecc4015efb0fb43166d22df86.jpg",@"http://a.hiphotos.baidu.com/ting/pic/item/09fa513d269759eecc4015efb0fb43166d22df86.jpg",@"",@""];
+    self.imageArray = [NSMutableArray arrayWithCapacity:self.largeURLArr.count];
+    for (int i = 0; i<self.largeURLArr.count; i++) {
+        UIImageView *imageView = [[UIImageView alloc]initWithFrame:CGRectMake(100, 100*i, 100, 100)];
+        [self.view addSubview:imageView];
+        if (!self.smallURLArr[i].length) {
+            [imageView sd_setImageWithURL:[NSURL URLWithString:_largeURLArr[i]]];
+        }else{
+            [imageView sd_setImageWithURL:[NSURL URLWithString:_smallURLArr[i]]];
+        }
+        
+        UITapGestureRecognizer *gesture = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(openImage:)];
+        imageView.userInteractionEnabled = YES;
+        [imageView addGestureRecognizer:gesture];
+        
+        [self.view addSubview:imageView];
+        [self.imageArray addObject:imageView];
+    }
     
-    
-    UITapGestureRecognizer *gesture = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(openImage)];
-    self.imageView.userInteractionEnabled = YES;
-    [self.imageView addGestureRecognizer:gesture];
-    
-    
-    
-    self.imageView2 = [[UIImageView alloc]initWithFrame:CGRectMake(100, 300, 100, 100)];
-    [self.view addSubview:self.imageView2];
-    [self.imageView2 sd_setImageWithURL:[NSURL URLWithString:@"http://friendq-10009900.image.myqcloud.com/fateship/bc/74/c7ece1d964db164599a59eb7a131/pic/1460515448_8042853.jpg!friendqsmall"]];
-    
-    
-    UITapGestureRecognizer *gesture2 = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(openImage2)];
-    self.imageView2.userInteractionEnabled = YES;
-    [self.imageView2 addGestureRecognizer:gesture2];
     
 }
 
 
-- (void)openImage{
-    KFPhotosBrowser *album = [[KFPhotosBrowser alloc]init];
-    KFPhoto *photo1 = [[KFPhoto alloc]init];
-    photo1.largeImage = _imageView.image;
-    photo1.originalFrame = [self.view convertRect:self.imageView.frame toView:nil];
+- (void)openImage:(UITapGestureRecognizer *)gesture{
+    UIImageView *imageView = (UIImageView *)gesture.view;
+    NSMutableArray *photos  = [NSMutableArray arrayWithCapacity:self.imageArray.count];
+    for (int i = 0; i<self.imageArray.count; i++) {
+        KFPhoto *photo = [[KFPhoto alloc]init];
+        
+        photo.thumbImage = _imageArray[i].image;
+        photo.largeUrl = self.largeURLArr[i];
+        photo.originalFrame = [self.view convertRect:self.imageArray[i].frame toView:nil];
+        photo.contentMode = self.imageArray[i].contentMode;
+        [photos addObject:photo];
+    }
     
-    
-    KFPhoto *photo = [[KFPhoto alloc]init];
-    photo.thumbImage = _imageView2.image;
-    photo.largeUrl = @"http://friendq-10009900.image.myqcloud.com/fateship/bc/74/c7ece1d964db164599a59eb7a131/pic/1460515448_8042853.jpg";
-    photo.originalFrame = [self.view convertRect:self.imageView2.frame toView:nil];
-    album.photos = @[photo1,photo];
-    photo.contentMode = UIViewContentModeScaleToFill;
-    photo1.contentMode = UIViewContentModeScaleToFill;
-    
-    [self presentViewController:album animated:YES completion:nil];
-}
-
-
-- (void)openImage2{
-//    KFAlbumBrowser *album = [[KFAlbumBrowser alloc]init];
-    KFPhoto *photo1 = [[KFPhoto alloc]init];
-    photo1.largeImage = _imageView.image;
-    photo1.contentMode = UIViewContentModeScaleToFill;
-    photo1.originalFrame = [self.view convertRect:self.imageView.frame toView:nil];
-//    album.photos = @[photo1];
+//    KFPhotosBrowser *album = [[KFPhotosBrowser alloc]init];
+//    album.photos = photos;
+//    album.startIndex = [self.imageArray indexOfObject:imageView];
 //    [self presentViewController:album animated:YES completion:nil];
     
-    
-    KFPhotosBrowser *album = [[KFPhotosBrowser alloc]init];
-    KFPhoto *photo = [[KFPhoto alloc]init];
-    photo.contentMode = UIViewContentModeScaleToFill;
-    photo.thumbImage = _imageView2.image;
-    photo.largeUrl = @"http://friendq-10009900.image.myqcloud.com/fateship/bc/74/c7ece1d964db164599a59eb7a131/pic/1460515448_8042853.jpg";
-    photo.originalFrame = [self.view convertRect:self.imageView2.frame toView:nil];
-    album.photos = @[photo1,photo];
-    album.startIndex = 1;
-    
-    [self presentViewController:album animated:YES completion:nil];
+    KFPhotosController *photoCtrl = [[KFPhotosController alloc]init];
+    photoCtrl.photos = photos;
+    photoCtrl.startIndex = [self.imageArray indexOfObject:imageView];
+    [self presentViewController:photoCtrl animated:YES completion:nil];
 }
-
-
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.

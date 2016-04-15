@@ -15,6 +15,7 @@
 
 @interface KFPhotosBrowser ()<UIScrollViewDelegate,KFPhotoViewerDelegate,UIViewControllerTransitioningDelegate>{
     CGFloat lastOffset;
+    NSInteger targetIndex;
 }
 
 @property (nonatomic) UIScrollView *scrollView;
@@ -36,6 +37,7 @@
         _startIndex = 0;
         _curIndex = _startIndex;
         _photoViewerArray = [NSMutableArray array];
+        targetIndex = -1;
     }
     return self;
 }
@@ -66,7 +68,7 @@
     CGFloat imageHeight = frame.size.height;
     
     self.scrollView = [[UIScrollView alloc]initWithFrame:frame];
-    
+    self.scrollView.backgroundColor = [UIColor blackColor];
     self.scrollView.contentSize = CGSizeMake(self.photos.count * imageWidth, imageHeight);
     self.scrollView.pagingEnabled = YES;
     self.scrollView.delegate = self;
@@ -108,6 +110,9 @@
 
 - (void)loadImageAtIndex:(NSUInteger)index{
     KFPhoto *photo = self.photos[index];
+    if (!photo.largeUrl.length) {
+        return;
+    }
     KFPhotoViewer *photoViewer = self.photoViewerArray[index];
     [photoViewer setImage:photo.thumbImage isLoading:YES];
     [[SDWebImageManager sharedManager]downloadImageWithURL:[NSURL URLWithString:photo.largeUrl] options:SDWebImageRetryFailed progress:^(NSInteger receivedSize, NSInteger expectedSize) {
@@ -123,7 +128,7 @@
     KFPhotoViewer *photoViewer = self.photoViewerArray[index];
     if (photo.largeImage) {
         [photoViewer setImage:photo.largeImage isLoading:NO];
-    }else if (photo.largeUrl) {
+    }else if (photo.largeUrl.length) {
         [photoViewer setImage:photo.thumbImage isLoading:YES];
         [[SDWebImageManager sharedManager]downloadImageWithURL:[NSURL URLWithString:photo.largeUrl] options:SDWebImageRetryFailed progress:^(NSInteger receivedSize, NSInteger expectedSize) {
             //here loading progress
@@ -131,9 +136,6 @@
             [photoViewer setImage:image isLoading:NO];
         }];
     }
-    
-    
-    
     
 }
 
@@ -160,18 +162,17 @@
 
 //photos setter
 - (void)setPhotos:(NSArray<KFPhoto *> *)photos{
-    _photos = photos;
     for (NSUInteger i = 0; i < photos.count; i++) {
         KFPhoto *photo = photos[i];
         
-        if (!photo.largeUrl&&!photo.largeImage) {
-            //fy-todo
-            return;
+        if ((!photo.largeUrl.length)&&(!photo.largeImage)) {
+            photo.largeImage = photo.thumbImage;
+            continue;
         }
         
         BOOL existLargeImage = [self getExistLargeImage:photo];
         
-        if (existLargeImage) {
+        if (!existLargeImage) {
             //fy-todo
             __block KFPhoto *photo;
             [[SDWebImageManager sharedManager]downloadImageWithURL:[NSURL URLWithString:photo.largeUrl] options:SDWebImageRetryFailed progress:nil completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished, NSURL *imageURL) {
@@ -179,6 +180,7 @@
             }];
         }
     }
+    _photos = photos;
 }
 
 
@@ -203,7 +205,7 @@
 #pragma mark - KFPhotoViewer delegate
 - (void)tapPhotoViewer:(KFPhotoViewer *)photoViewer{
     KFPhoto *photo = self.photos[self.curIndex];
-    [photoViewer dismissToRect:photo.originalFrame];
+//    [photoViewer dismissToRect:photo.originalFrame];
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.4 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         [self dismissViewControllerAnimated:YES completion:nil];
     });
@@ -232,40 +234,34 @@
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView{
     NSInteger index = -1;
-    if(scrollView.contentOffset.x - lastOffset > 0){
-        index = [self nextIndex];
-    }else if (scrollView.contentOffset.x - lastOffset < 0){
-        index = [self preIndex];
+    CGFloat pageWidth = scrollView.frame.size.width;
+    if(scrollView.contentOffset.x - lastOffset > 20){
+        index = scrollView.contentOffset.x/pageWidth + 1;
+    }else if (scrollView.contentOffset.x - lastOffset < 20){
+        index = scrollView.contentOffset.x/pageWidth;
     }
-    if (index >= 0 &&index!=_curIndex) {
+    if ((index >= 0&&index<=self.photos.count-1) &&(index!=_curIndex)&&(targetIndex != index)) {
+        NSLog(@"target:%d",index);
+        targetIndex = index;
         [self setImageAtIndex:index];
     }
 }
 
-- (void)scrollViewWillEndDragging:(UIScrollView *)scrollView withVelocity:(CGPoint)velocity targetContentOffset:(inout CGPoint *)targetContentOffset{
-    CGPoint point = *targetContentOffset;
-    NSUInteger page = point.x/scrollView.frame.size.width;
+
+
+- (void)scrollViewWillEndDragging:(UIScrollView *)scrollView withVelocity:(CGPoint)velocity targetContentOffset:(inout CGPoint *)targetContentOffset
+{
+    CGPoint target = *targetContentOffset;
+    CGFloat pageWidth = scrollView.frame.size.width;
+    NSInteger page = target.x/pageWidth; // page编号从0开始
+    
     if (self.curIndex != page)
     {
         self.curIndex = page;
-//        [self setImageAtIndex:page];
-        
+        lastOffset = pageWidth*page;
+
     }
 }
-
-
-//- (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
-//{
-//    CGFloat pageWidth = scrollView.frame.size.width;
-//    NSInteger page = floor((scrollView.contentOffset.x - pageWidth / 2) / pageWidth) + 1; // page编号从0开始
-//    
-//    if (self.curIndex != page)
-//    {
-//        self.curIndex = page;
-//        [self setImageAtIndex:page];
-//
-//    }
-//}
 
 
 

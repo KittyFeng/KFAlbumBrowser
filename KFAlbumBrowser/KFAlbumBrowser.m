@@ -113,14 +113,14 @@
     if (preIndex < 0) {
         [self loadPre];
     }else{
-        [self loadImageAtIndex:[self preIndex]];
+        [self loadImageAtIndex:preIndex];
     }
     
     NSInteger nextIndex = [self nextIndex];
     if (nextIndex < 0 ) {
         [self  loadAfter];
     }else{
-        [self loadImageAtIndex:[self nextIndex]];
+        [self loadImageAtIndex:nextIndex];
     }
 }
 
@@ -156,39 +156,13 @@
 
 //当访问数组以外的内容,delegate??
 - (void)loadPre{
-    
+    NSLog(@"前面追加");
 }
 
 - (void)loadAfter{
-
+    NSLog(@"后面追加");
 }
 
-#pragma mark - UIScrollView delegate
-
-- (void)scrollViewDidScroll:(UIScrollView *)scrollView{
-    NSInteger index = -1;
-    if(scrollView.contentOffset.x - lastOffset > 0){
-        self.rightDirection = YES;
-        index = [self nextIndex];
-    }else if (scrollView.contentOffset.x - lastOffset < 0){
-        self.rightDirection = NO;
-        index = [self preIndex];
-    }
-
-    if (index >= 0 &&index!=_curIndex&&index!=_targetIndex) {
-        self.targetIndex = index;
-        [self addPhotoViewerAtIndex:index];
-    }
-}
-
-- (void)scrollViewWillEndDragging:(UIScrollView *)scrollView withVelocity:(CGPoint)velocity targetContentOffset:(inout CGPoint *)targetContentOffset{
-    CGPoint point = *targetContentOffset;
-    NSUInteger page = point.x/scrollView.frame.size.width;
-    if (self.curIndex != page)
-    {
-        self.curIndex = page;
-    }
-}
 
 
 - (void)addPhotoViewerAtIndex:(NSInteger)index{
@@ -214,6 +188,7 @@
     }
     [self.photoViewerArray addObject:photoViewer];
     [self.scrollView addSubview:photoViewer];
+    [self downloadImageAroundIndex:index];
     
 }
 
@@ -232,6 +207,36 @@
         
     }];
 }
+
+
+
+#pragma mark - UIScrollView delegate
+
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView{
+    NSInteger index = -1;
+    if(scrollView.contentOffset.x - lastOffset > 20){
+        self.rightDirection = YES;
+        index = [self nextIndex];
+    }else if (scrollView.contentOffset.x - lastOffset < 20){
+        self.rightDirection = NO;
+        index = [self preIndex];
+    }
+
+    if (index >= 0 &&index!=_curIndex&&index!=_targetIndex) {
+        self.targetIndex = index;
+        [self addPhotoViewerAtIndex:index];
+    }
+}
+
+- (void)scrollViewWillEndDragging:(UIScrollView *)scrollView withVelocity:(CGPoint)velocity targetContentOffset:(inout CGPoint *)targetContentOffset{
+    CGPoint point = *targetContentOffset;
+    NSUInteger page = point.x/scrollView.frame.size.width;
+    if (self.curIndex != page)
+    {
+        self.curIndex = page;
+    }
+}
+
 
 
 @end

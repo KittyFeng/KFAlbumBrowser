@@ -19,17 +19,21 @@
 
 @end
 
+typedef void(^KFPhotoTap)(KFPhotoViewer *photoViewer);
+
+
 @interface KFPhotoViewer : UIScrollView
 
 @property (nonatomic,readonly) UIImageView *imageView;
 @property (nonatomic,weak) id <KFPhotoViewerDelegate> vDelegate;
 @property (nonatomic,assign) UIViewContentMode imageMode;
+@property (nonatomic,copy) KFPhotoTap tapBlock;
 
 
 - (void)makeAnimationWithImage:(UIImage *)largeImage
                       fromRect:(CGRect)rect;
 
-- (void)dismissToRect:(CGRect)rect;
+- (void)dismissToRect:(CGRect)rect animation:(void (^)(void))animation;
 
     
 - (void)setImage:(UIImage *)image isLoading:(BOOL)isLoading;
