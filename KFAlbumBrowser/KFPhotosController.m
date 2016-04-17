@@ -82,16 +82,7 @@
             photo.largeImage = photo.thumbImage;
             continue;
         }
-        
-        BOOL existLargeImage = [self getExistLargeImage:photo];
-        
-        if (!existLargeImage) {
-            //fy-todo
-            __block KFPhoto *photo;
-            [[SDWebImageManager sharedManager]downloadImageWithURL:[NSURL URLWithString:photo.largeUrl] options:SDWebImageRetryFailed progress:nil completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished, NSURL *imageURL) {
-                photo.largeImage = image;
-            }];
-        }
+        [self getExistLargeImage:photo];
     }
     _photos = photos;
 }
@@ -115,6 +106,26 @@
 }
 
 
+- (void)downloadImageAroundIndex:(NSUInteger)curIndex{
+    NSInteger preIndex = curIndex - 1;
+    if (preIndex >= 0) {
+        [self downloadImageAtIndex:preIndex];
+    }
+    
+    NSUInteger nextIndex = curIndex + 1;
+    if (nextIndex <= self.photos.count - 1 ) {
+        [self downloadImageAtIndex:nextIndex];
+    }
+}
+
+- (void)downloadImageAtIndex:(NSInteger)index{
+    if (self.photos[index].largeImage) {
+        return;
+    }
+    [[SDWebImageManager sharedManager]downloadImageWithURL:[NSURL URLWithString:self.photos[index].largeUrl] options:SDWebImageRetryFailed progress:nil completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished, NSURL *imageURL) {
+        self.photos[index].largeImage = image;
+    }];
+}
 
 #pragma mark -
 #pragma mark UICollectionViewDataSource
@@ -126,6 +137,7 @@
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
+    NSLog(@"indexPath:%@",indexPath);
     KFPhotoCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:collectionCellIdentifier forIndexPath:indexPath];
     cell.delegate = self;
     [cell setPhoto:self.photos[indexPath.row] startShow:(BOOL)isStarting];
@@ -133,7 +145,7 @@
     if (isStarting) {
         isStarting = NO;
     }
-    
+    [self downloadImageAroundIndex:indexPath.row];
     return cell;
 }
 
