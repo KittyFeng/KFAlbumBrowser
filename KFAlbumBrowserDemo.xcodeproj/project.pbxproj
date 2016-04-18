@@ -173,18 +173,18 @@
 			children = (
 				2A4FF0C21CB758BD00AEBB48 /* KFPhoto.h */,
 				2A4FF0C31CB758BD00AEBB48 /* KFPhoto.m */,
-				2A4FF0C51CB7618E00AEBB48 /* KFPhotosBrowser.h */,
-				2A4FF0C61CB7618E00AEBB48 /* KFPhotosBrowser.m */,
 				2A3559D61CC0D53C00622F04 /* KFPhotosController.h */,
 				2A3559D71CC0D53C00622F04 /* KFPhotosController.m */,
 				2A3559D91CC0D79400622F04 /* KFPhotoCell.h */,
 				2A3559DA1CC0D79400622F04 /* KFPhotoCell.m */,
-				2A1315741CBF3F95001324C2 /* KFAlbumBrowser.h */,
-				2A1315751CBF3F95001324C2 /* KFAlbumBrowser.m */,
 				2A1315771CBF433B001324C2 /* ObjectQueue.h */,
 				2A1315781CBF433B001324C2 /* ObjectQueue.m */,
 				2A4FF0C81CB7622100AEBB48 /* KFPhotoViewer.h */,
 				2A4FF0C91CB7622100AEBB48 /* KFPhotoViewer.m */,
+				2A4FF0C51CB7618E00AEBB48 /* KFPhotosBrowser.h */,
+				2A4FF0C61CB7618E00AEBB48 /* KFPhotosBrowser.m */,
+				2A1315741CBF3F95001324C2 /* KFAlbumBrowser.h */,
+				2A1315751CBF3F95001324C2 /* KFAlbumBrowser.m */,
 				2A1315721CBF2E91001324C2 /* KFAnimationTransitionDelegate */,
 			);
 			path = KFAlbumBrowser;

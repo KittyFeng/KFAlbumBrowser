@@ -20,6 +20,7 @@
 
 @property (nonatomic,assign) NSUInteger curIndex;
 @property (nonatomic,strong) UICollectionView *collectionView;
+@property (nonatomic,strong) UIPageControl *pageCtrl;
 @end
 
 @implementation KFPhotosController
@@ -44,32 +45,53 @@
 }
 
 
+- (void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+//    [UIApplication sharedApplication].statusBarHidden = YES;
+}
+
+
+- (void)viewWillDisappear:(BOOL)animated{
+//    [UIApplication sharedApplication].statusBarHidden = NO;
+}
+
 - (void)initViews{
     UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];
     flowLayout.scrollDirection = UICollectionViewScrollDirectionHorizontal;
-    flowLayout.itemSize = CGSizeMake(self.view.bounds.size.width , self.view.bounds.size.height);
-    flowLayout.minimumInteritemSpacing = 0;
-//    flowLayout.minimumLineSpacing = 10;
-    flowLayout.minimumLineSpacing = 0;
-//    flowLayout.sectionInset = UIEdgeInsetsMake(0, 5, 0, 5);
+    flowLayout.itemSize = CGSizeMake(self.view.bounds.size.width, self.view.bounds.size.height);
+//    flowLayout.minimumInteritemSpacing = 16;
+    flowLayout.minimumLineSpacing = 16;
+//    flowLayout.minimumLineSpacing = 0;
+    flowLayout.sectionInset = UIEdgeInsetsMake(0, 8, 0, 8);
     
-//    self.collectionView = [[UICollectionView alloc]initWithFrame:CGRectMake(-5, 0, self.view.bounds.size.width + 10, self.view.bounds.size.height) collectionViewLayout:flowLayout];
-    self.collectionView = [[UICollectionView alloc]initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, self.view.bounds.size.height) collectionViewLayout:flowLayout];
-    self.collectionView.delegate = self;
-    self.collectionView.dataSource = self;
-    self.collectionView.backgroundColor = [UIColor blackColor];
-    self.collectionView.dataSource = self;
-    self.collectionView.delegate = self;
-    self.collectionView.pagingEnabled = YES;
-    self.collectionView.showsHorizontalScrollIndicator = YES;
-    [self.collectionView registerClass:[KFPhotoCell class]
+    UICollectionView *collectionView = [[UICollectionView alloc]initWithFrame:CGRectMake(-8, 0, self.view.bounds.size.width + 16, self.view.bounds.size.height) collectionViewLayout:flowLayout];
+//    self.collectionView = [[UICollectionView alloc]initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, self.view.bounds.size.height) collectionViewLayout:flowLayout];
+    collectionView.delegate = self;
+    collectionView.dataSource = self;
+    collectionView.backgroundColor = [UIColor blackColor];
+    collectionView.dataSource = self;
+    collectionView.delegate = self;
+    collectionView.pagingEnabled = YES;
+    collectionView.showsVerticalScrollIndicator = NO;
+    collectionView.showsHorizontalScrollIndicator = NO;
+    [collectionView registerClass:[KFPhotoCell class]
             forCellWithReuseIdentifier:collectionCellIdentifier];
-    [self.view addSubview:self.collectionView];
+    [self.view addSubview:collectionView];
+    self.collectionView = collectionView;
+    
+    UIPageControl *pageCtrl = [[UIPageControl alloc]initWithFrame:CGRectMake(0, self.view.bounds.size.height - 30, self.view.bounds.size.width, 20)];
+    pageCtrl.numberOfPages = self.photos.count;
+    pageCtrl.currentPage = self.startIndex;
+    pageCtrl.hidesForSinglePage = YES;
+    [self.view addSubview:pageCtrl];
+    self.pageCtrl = pageCtrl;
+    
+    
 }
 
 
 - (void)showStartImage{
-    [self.collectionView setContentOffset:CGPointMake(self.startIndex*self.view.frame.size.width, 0) animated:NO];
+    [self.collectionView setContentOffset:CGPointMake(self.startIndex*self.view.frame.size.width + 16*self.startIndex, 0) animated:NO];
     self.curIndex = _startIndex;
     isStarting = YES;
 }
@@ -137,7 +159,7 @@
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    NSLog(@"indexPath:%@",indexPath);
+//    NSLog(@"indexPath:%@",indexPath);
     KFPhotoCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:collectionCellIdentifier forIndexPath:indexPath];
     cell.delegate = self;
     [cell setPhoto:self.photos[indexPath.row] startShow:(BOOL)isStarting];
@@ -150,10 +172,10 @@
 }
 
 
+
 #pragma mark UICollectionViewDelegate
-- (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
-{
-   
+- (void)collectionView:(UICollectionView *)collectionView didEndDisplayingCell:(UICollectionViewCell *)cell forItemAtIndexPath:(NSIndexPath *)indexPath{
+    self.pageCtrl.currentPage = ceil((collectionView.contentOffset.x - (8 + 16*_curIndex))/collectionView.frame.size.width);
 }
 
 

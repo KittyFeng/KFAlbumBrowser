@@ -30,6 +30,7 @@
 
 
 - (void)setPhoto:(KFPhoto *)photo startShow:(BOOL)isStarting{
+    [self.photoViewer scaleToOriginalSize];
     _photo = photo;
     _photoViewer.imageMode = photo.contentMode;
     if (isStarting) {

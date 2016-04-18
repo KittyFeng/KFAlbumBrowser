@@ -204,7 +204,7 @@
 
 #pragma mark - KFPhotoViewer delegate
 - (void)tapPhotoViewer:(KFPhotoViewer *)photoViewer{
-    KFPhoto *photo = self.photos[self.curIndex];
+//    KFPhoto *photo = self.photos[self.curIndex];
 //    [photoViewer dismissToRect:photo.originalFrame];
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.4 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         [self dismissViewControllerAnimated:YES completion:nil];
@@ -241,7 +241,6 @@
         index = scrollView.contentOffset.x/pageWidth;
     }
     if ((index >= 0&&index<=self.photos.count-1) &&(index!=_curIndex)&&(targetIndex != index)) {
-        NSLog(@"target:%d",index);
         targetIndex = index;
         [self setImageAtIndex:index];
     }

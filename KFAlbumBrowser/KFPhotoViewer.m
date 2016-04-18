@@ -21,7 +21,7 @@
 
 @property (nonatomic,readwrite) UIImageView *imageView;
 @property (nonatomic,assign) BOOL isLoading;
-
+@property (nonatomic,strong) UIView *loadingView;
 
 
 @end
@@ -53,6 +53,8 @@
     doubleTap.numberOfTapsRequired = 2;
     doubleTap.numberOfTouchesRequired = 1;
     [self addGestureRecognizer:doubleTap];
+    
+    [tap requireGestureRecognizerToFail:doubleTap];
 }
 
 - (void)addImageView{
@@ -79,7 +81,9 @@
         CGPoint point = [doubleTap locationInView:self];
         [self zoomToRect:CGRectMake(point.x-40, point.y-40 , 80, 80) animated:YES];
     }else{
-        self.zoomScale = 1;
+        [UIView animateWithDuration:0.2 animations:^{
+            self.zoomScale = 1;
+        }];
     }
 }
 
@@ -100,7 +104,9 @@
 }
 
 
-
+- (void)setLoadingProgress:(CGFloat)progress{
+    
+}
 
 - (void)setImage:(UIImage *)image isLoading:(BOOL)isLoading{
     if (isLoading) {

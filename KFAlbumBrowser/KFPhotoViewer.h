@@ -38,6 +38,8 @@ typedef void(^KFPhotoTap)(KFPhotoViewer *photoViewer);
     
 - (void)setImage:(UIImage *)image isLoading:(BOOL)isLoading;
 
+- (void)setLoadingProgress:(CGFloat)progress;
+
 - (void)scaleToOriginalSize;
 
 
