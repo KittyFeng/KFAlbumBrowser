@@ -11,6 +11,8 @@
 #import "SDWebImageManager.h"
 #import "KFDismissAnimationController.h"
 #import "KFPresentAnimationController.h"
+#import "UIImageView+WebCache.h"
+#import "SDWebImagePrefetcher.h"
 
 #define collectionCellIdentifier @"photoCell"
 
@@ -47,25 +49,23 @@
 
 - (void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
-//    [UIApplication sharedApplication].statusBarHidden = YES;
+    [UIApplication sharedApplication].statusBarHidden = YES;
 }
 
 
 - (void)viewWillDisappear:(BOOL)animated{
-//    [UIApplication sharedApplication].statusBarHidden = NO;
+    [super viewWillDisappear:animated];
+    [UIApplication sharedApplication].statusBarHidden = NO;
 }
 
 - (void)initViews{
     UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];
     flowLayout.scrollDirection = UICollectionViewScrollDirectionHorizontal;
     flowLayout.itemSize = CGSizeMake(self.view.bounds.size.width, self.view.bounds.size.height);
-//    flowLayout.minimumInteritemSpacing = 16;
     flowLayout.minimumLineSpacing = 16;
-//    flowLayout.minimumLineSpacing = 0;
     flowLayout.sectionInset = UIEdgeInsetsMake(0, 8, 0, 8);
     
     UICollectionView *collectionView = [[UICollectionView alloc]initWithFrame:CGRectMake(-8, 0, self.view.bounds.size.width + 16, self.view.bounds.size.height) collectionViewLayout:flowLayout];
-//    self.collectionView = [[UICollectionView alloc]initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, self.view.bounds.size.height) collectionViewLayout:flowLayout];
     collectionView.delegate = self;
     collectionView.dataSource = self;
     collectionView.backgroundColor = [UIColor blackColor];
@@ -92,7 +92,6 @@
 
 - (void)showStartImage{
     [self.collectionView setContentOffset:CGPointMake(self.startIndex*self.view.frame.size.width + 16*self.startIndex, 0) animated:NO];
-    self.curIndex = _startIndex;
     isStarting = YES;
 }
 
@@ -101,53 +100,41 @@
         KFPhoto *photo = photos[i];
         
         if ((!photo.largeUrl.length)&&(!photo.largeImage)) {
-            photo.largeImage = photo.thumbImage;
+            photo.largeImage = photo.thumbView.image;
             continue;
         }
-        [self getExistLargeImage:photo];
     }
     _photos = photos;
 }
 
 
-
-//judge if large image exists on disk or memory,and set the image it to photo model
-- (BOOL)getExistLargeImage:(KFPhoto *)photo{
-    if (photo.largeImage) {
-        return  YES;
-    }else{
-        if (photo.largeUrl.length) {
-            BOOL exist = [[SDWebImageManager sharedManager]diskImageExistsForURL:[NSURL URLWithString:photo.largeUrl]];
-            if (exist) {
-                photo.largeImage = [[SDImageCache sharedImageCache]imageFromDiskCacheForKey:[NSURL URLWithString:photo.largeUrl].absoluteString];
-            }
-            return exist;
-        }
-        return NO;
-    }
+- (void)setStartIndex:(NSUInteger)startIndex{
+    _startIndex = startIndex;
+    self.curIndex = startIndex;
 }
 
 
-- (void)downloadImageAroundIndex:(NSUInteger)curIndex{
+
+- (void)prefetchImagesAroundIndex:(NSUInteger)curIndex{
+    NSMutableArray *urlArray = [NSMutableArray arrayWithCapacity:2];
     NSInteger preIndex = curIndex - 1;
     if (preIndex >= 0) {
-        [self downloadImageAtIndex:preIndex];
+        [urlArray addObject:[NSURL URLWithString:self.photos[preIndex].largeUrl]];
     }
     
     NSUInteger nextIndex = curIndex + 1;
     if (nextIndex <= self.photos.count - 1 ) {
-        [self downloadImageAtIndex:nextIndex];
+        [urlArray addObject:[NSURL URLWithString:self.photos[nextIndex].largeUrl]];
     }
+    [self prefetchImageUrls:urlArray];
 }
 
-- (void)downloadImageAtIndex:(NSInteger)index{
-    if (self.photos[index].largeImage) {
-        return;
-    }
-    [[SDWebImageManager sharedManager]downloadImageWithURL:[NSURL URLWithString:self.photos[index].largeUrl] options:SDWebImageRetryFailed progress:nil completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished, NSURL *imageURL) {
-        self.photos[index].largeImage = image;
-    }];
+- (void)prefetchImageUrls:(NSArray *)urls{
+    [[SDWebImagePrefetcher sharedImagePrefetcher]prefetchURLs:urls];
 }
+
+
+
 
 #pragma mark -
 #pragma mark UICollectionViewDataSource
@@ -159,7 +146,6 @@
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-//    NSLog(@"indexPath:%@",indexPath);
     KFPhotoCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:collectionCellIdentifier forIndexPath:indexPath];
     cell.delegate = self;
     [cell setPhoto:self.photos[indexPath.row] startShow:(BOOL)isStarting];
@@ -167,7 +153,7 @@
     if (isStarting) {
         isStarting = NO;
     }
-    [self downloadImageAroundIndex:indexPath.row];
+    [self prefetchImagesAroundIndex:indexPath.row];
     return cell;
 }
 
@@ -179,28 +165,15 @@
 }
 
 
-#pragma mark - UICollectionCellDelegate
-- (void)requestImage:(KFPhoto *)photo inPhotoViewer:(KFPhotoViewer *)photoViewer{
-    if (!photo.largeUrl.length) {
-        return;
-    }
-    [photoViewer setImage:photo.thumbImage isLoading:YES];
-    [[SDWebImageManager sharedManager]downloadImageWithURL:[NSURL URLWithString:photo.largeUrl] options:SDWebImageRetryFailed progress:^(NSInteger receivedSize, NSInteger expectedSize) {
-        //here loading progress
-    } completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished, NSURL *imageURL) {
-        [photoViewer setImage:image isLoading:NO];
-        photo.largeImage = image;
-    }];
-
-}
+#pragma mark - KFPhotoCellDelegate
 
 - (void)tapImage:(KFPhoto *)photo inPhotoViewer:(KFPhotoViewer *)photoViewer{
-    [photoViewer dismissToRect:photo.originalFrame animation:^{
-        self.collectionView.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0];
-    }];
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        [self dismissViewControllerAnimated:YES completion:nil];
-    });
+    [self dismissViewControllerAnimated:YES completion:nil];
+    if (!CGRectIsEmpty(photo.originalFrame)) {
+        [photoViewer dismissToRect:photo.originalFrame animation:^{
+            self.collectionView.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0];
+        }];
+    }
 }
 
 #pragma mark - UIViewControllerTransitioningDelegate

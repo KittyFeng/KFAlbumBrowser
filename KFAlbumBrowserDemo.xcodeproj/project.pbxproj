@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2A1315761CBF3F95001324C2 /* KFAlbumBrowser.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A1315751CBF3F95001324C2 /* KFAlbumBrowser.m */; };
 		2A1315791CBF433B001324C2 /* ObjectQueue.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A1315781CBF433B001324C2 /* ObjectQueue.m */; };
 		2A3559D81CC0D53C00622F04 /* KFPhotosController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A3559D71CC0D53C00622F04 /* KFPhotosController.m */; };
 		2A3559DB1CC0D79400622F04 /* KFPhotoCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A3559DA1CC0D79400622F04 /* KFPhotoCell.m */; };
@@ -18,7 +17,6 @@
 		2A4FF0B71CB7571200AEBB48 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2A4FF0B61CB7571200AEBB48 /* Assets.xcassets */; };
 		2A4FF0BA1CB7571200AEBB48 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2A4FF0B81CB7571200AEBB48 /* LaunchScreen.storyboard */; };
 		2A4FF0C41CB758BD00AEBB48 /* KFPhoto.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A4FF0C31CB758BD00AEBB48 /* KFPhoto.m */; };
-		2A4FF0C71CB7618E00AEBB48 /* KFPhotosBrowser.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A4FF0C61CB7618E00AEBB48 /* KFPhotosBrowser.m */; };
 		2A4FF0CA1CB7622100AEBB48 /* KFPhotoViewer.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A4FF0C91CB7622100AEBB48 /* KFPhotoViewer.m */; };
 		2A4FF0ED1CB7636200AEBB48 /* MKAnnotationView+WebCache.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A4FF0CD1CB7636200AEBB48 /* MKAnnotationView+WebCache.m */; };
 		2A4FF0EE1CB7636200AEBB48 /* NSData+ImageContentType.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A4FF0CF1CB7636200AEBB48 /* NSData+ImageContentType.m */; };
@@ -41,8 +39,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		2A1315741CBF3F95001324C2 /* KFAlbumBrowser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFAlbumBrowser.h; sourceTree = "<group>"; };
-		2A1315751CBF3F95001324C2 /* KFAlbumBrowser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KFAlbumBrowser.m; sourceTree = "<group>"; };
 		2A1315771CBF433B001324C2 /* ObjectQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObjectQueue.h; sourceTree = "<group>"; };
 		2A1315781CBF433B001324C2 /* ObjectQueue.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ObjectQueue.m; sourceTree = "<group>"; };
 		2A3559D61CC0D53C00622F04 /* KFPhotosController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFPhotosController.h; sourceTree = "<group>"; };
@@ -61,8 +57,6 @@
 		2A4FF0BB1CB7571200AEBB48 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		2A4FF0C21CB758BD00AEBB48 /* KFPhoto.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFPhoto.h; sourceTree = "<group>"; };
 		2A4FF0C31CB758BD00AEBB48 /* KFPhoto.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KFPhoto.m; sourceTree = "<group>"; };
-		2A4FF0C51CB7618E00AEBB48 /* KFPhotosBrowser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFPhotosBrowser.h; sourceTree = "<group>"; };
-		2A4FF0C61CB7618E00AEBB48 /* KFPhotosBrowser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KFPhotosBrowser.m; sourceTree = "<group>"; };
 		2A4FF0C81CB7622100AEBB48 /* KFPhotoViewer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFPhotoViewer.h; sourceTree = "<group>"; };
 		2A4FF0C91CB7622100AEBB48 /* KFPhotoViewer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KFPhotoViewer.m; sourceTree = "<group>"; };
 		2A4FF0CC1CB7636200AEBB48 /* MKAnnotationView+WebCache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "MKAnnotationView+WebCache.h"; sourceTree = "<group>"; };
@@ -181,10 +175,6 @@
 				2A1315781CBF433B001324C2 /* ObjectQueue.m */,
 				2A4FF0C81CB7622100AEBB48 /* KFPhotoViewer.h */,
 				2A4FF0C91CB7622100AEBB48 /* KFPhotoViewer.m */,
-				2A4FF0C51CB7618E00AEBB48 /* KFPhotosBrowser.h */,
-				2A4FF0C61CB7618E00AEBB48 /* KFPhotosBrowser.m */,
-				2A1315741CBF3F95001324C2 /* KFAlbumBrowser.h */,
-				2A1315751CBF3F95001324C2 /* KFAlbumBrowser.m */,
 				2A1315721CBF2E91001324C2 /* KFAnimationTransitionDelegate */,
 			);
 			path = KFAlbumBrowser;
@@ -305,7 +295,6 @@
 				2AE0C6D31CBDDE3800F74967 /* KFDismissAnimationController.m in Sources */,
 				2A3559DB1CC0D79400622F04 /* KFPhotoCell.m in Sources */,
 				2A4FF0EF1CB7636200AEBB48 /* SDImageCache.m in Sources */,
-				2A1315761CBF3F95001324C2 /* KFAlbumBrowser.m in Sources */,
 				2A4FF0F31CB7636200AEBB48 /* SDWebImageDownloaderOperation.m in Sources */,
 				2A4FF0FC1CB7636200AEBB48 /* UIView+WebCacheOperation.m in Sources */,
 				2A4FF0CA1CB7622100AEBB48 /* KFPhotoViewer.m in Sources */,
@@ -323,7 +312,6 @@
 				2A4FF0ED1CB7636200AEBB48 /* MKAnnotationView+WebCache.m in Sources */,
 				2A4FF0F01CB7636200AEBB48 /* SDWebImageCompat.m in Sources */,
 				2A4FF0C41CB758BD00AEBB48 /* KFPhoto.m in Sources */,
-				2A4FF0C71CB7618E00AEBB48 /* KFPhotosBrowser.m in Sources */,
 				2A1315791CBF433B001324C2 /* ObjectQueue.m in Sources */,
 				2A4FF0F81CB7636200AEBB48 /* UIImage+MultiFormat.m in Sources */,
 				2A4FF0FA1CB7636200AEBB48 /* UIImageView+HighlightedWebCache.m in Sources */,

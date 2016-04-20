@@ -9,7 +9,6 @@
 #import "ViewController.h"
 #define imageUrl @"http://123.57.33.218/ayr_odeum/file/music/picture/97dcbd99b380484fb14dedcc132566cf.jpg"
 #import "UIImageView+WebCache.h"
-#import "KFPhotosBrowser.h"
 #import "KFPhoto.h"
 #import "KFPhotosController.h"
 
@@ -40,7 +39,8 @@
         UITapGestureRecognizer *gesture = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(openImage:)];
         imageView.userInteractionEnabled = YES;
         [imageView addGestureRecognizer:gesture];
-        
+        imageView.contentMode = UIViewContentModeScaleAspectFill;
+        imageView.clipsToBounds = YES;
         [self.view addSubview:imageView];
         [self.imageArray addObject:imageView];
     }
@@ -55,10 +55,8 @@
     for (int i = 0; i<self.imageArray.count; i++) {
         KFPhoto *photo = [[KFPhoto alloc]init];
         
-        photo.thumbImage = _imageArray[i].image;
+        photo.thumbView = _imageArray[i];
         photo.largeUrl = self.largeURLArr[i];
-        photo.originalFrame = [self.view convertRect:self.imageArray[i].frame toView:nil];
-        photo.contentMode = self.imageArray[i].contentMode;
         [photos addObject:photo];
     }
     

@@ -11,11 +11,11 @@
 
 @interface KFPhoto : NSObject
 
-@property (nonatomic) UIImage *thumbImage;
-@property (nonatomic) NSString *largeUrl;
-@property (nonatomic) UIImage *largeImage;
-@property (nonatomic) UIViewContentMode contentMode;
-@property (nonatomic) CGRect originalFrame;
+@property (nonatomic,strong) UIImageView *thumbView;
+@property (nonatomic,copy) NSString *largeUrl;
+@property (nonatomic,strong) UIImage *largeImage;
+
+@property (nonatomic,readonly) CGRect originalFrame;
 
 
 @end

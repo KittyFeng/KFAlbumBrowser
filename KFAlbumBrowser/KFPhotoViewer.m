@@ -28,6 +28,8 @@
 
 @implementation KFPhotoViewer
 
+
+#pragma mark - init
 - (instancetype)initWithFrame:(CGRect)frame
 {
     self = [super initWithFrame:frame];
@@ -59,12 +61,91 @@
 
 - (void)addImageView{
     _imageView = [[UIImageView alloc]initWithFrame:CGRectZero];
+    _imageMode = UIViewContentModeScaleToFill;
     _imageView.contentMode = _imageMode;
-    _imageMode = UIViewContentModeScaleAspectFit;
+    _imageView.clipsToBounds = YES;
     _imageView.backgroundColor = [UIColor clearColor];
     _imageView.userInteractionEnabled = YES;
     [self addSubview:_imageView];
 }
+
+#pragma mark - public methods
+- (void)makeAnimationWithImage:(UIImage *)largeImage
+                      fromRect:(CGRect)rect{
+    [self setImage:largeImage withFrame:[self convertRect:rect fromView:nil] animation:NO];
+    [self setImage:nil animation:YES];
+
+    
+}
+
+
+- (void)dismissToRect:(CGRect)rect animation:(void (^)(void))animation{
+    [self resizePhotoToRect:[self convertRect:rect fromView:nil] contentMode:self.imageMode animation:^{
+        self.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0];
+        self.superview.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0];
+        animation();
+    } completion:nil];
+}
+
+
+//默认为充满屏幕大小
+- (void)setImage:(UIImage *)image animation:(BOOL)animation{
+    if (image) {
+        self.imageView.image = image;
+    }
+    
+    CGRect newFrame = [self getRightFrameOfImage:self.imageView.image InRect:self.bounds];
+    if (animation) {
+        [self resizePhotoToRect:newFrame contentMode:UIViewContentModeScaleToFill animation:nil completion:nil];
+    }else{
+        self.imageView.frame = newFrame;
+    }
+}
+
+//默认图片在中心
+- (void)setImage:(UIImage *)image withSize:(CGSize)size animation:(BOOL)animation{
+    CGRect newFrame = [self getThumbnailRectWithSize:size];
+    if (image) {
+        self.imageView.image = image;
+    }
+    if (animation) {
+        [self resizePhotoToRect:newFrame contentMode:self.imageMode animation:nil completion:nil];
+    }else{
+        self.imageView.frame = newFrame;
+    }
+}
+
+- (void)setImage:(UIImage *)image withFrame:(CGRect)frame animation:(BOOL)animation{
+    if (image) {
+        self.imageView.image = image;
+    }
+    if (animation) {
+        [self resizePhotoToRect:[self convertRect:frame fromView:nil] contentMode:self.imageMode animation:nil completion:nil];
+    }else{
+        self.imageView.frame = [self convertRect:frame fromView:nil];
+    }
+}
+
+
+- (void)startLoadingWithHud:(BOOL)hasHud{
+    [self lockZoom];
+    _isLoading = YES;
+    if (hasHud) {
+        //add
+        //show
+    }
+}
+- (void)stopLoading{
+    [self unlockZoom];
+    _isLoading = NO;
+    //setprogress
+}
+- (void)setLoadingProgress:(CGFloat)progress{
+    //hide
+    //remove
+}
+
+#pragma mark - private methods
 
 - (void)photoTap{
     if (self.tapBlock) {
@@ -87,58 +168,12 @@
     }
 }
 
-- (void)makeAnimationWithImage:(UIImage *)largeImage
-                      fromRect:(CGRect)rect{
-    
-    self.imageView.frame = [self convertRect:rect fromView:nil];
-    self.imageView.image = largeImage;
-    
-    CGRect newFrame = [self getRightFrameOfImage:largeImage InRect:self.bounds];
-    
-    [self resizePhotoToRect:newFrame contentMode:UIViewContentModeScaleAspectFit animation:^{
-        self.backgroundColor = [UIColor blackColor];
-    } completion:^{
-        [self unlockZoom];
-    }];
-    
+- (CGSize)defaultThumbnailSize{
+    return CGSizeMake(100, 100);
 }
 
-
-- (void)setLoadingProgress:(CGFloat)progress{
-    
-}
-
-- (void)setImage:(UIImage *)image isLoading:(BOOL)isLoading{
-    if (isLoading) {
-        [self setLoadingImage:image];
-        [self lockZoom];
-    }else{
-        [self setLargeImage:image];
-        [self unlockZoom];
-    }
-}
-
-
-- (void)setLoadingImage:(UIImage *)image{
-    _isLoading = YES;
-    self.imageView.image = image;
-    self.imageView.frame = [self getThumbnailRect];
-}
-
-- (void)setLargeImage:(UIImage *)image{
-    self.imageView.image = image;
-    
-    CGRect newFrame = [self getRightFrameOfImage:image InRect:self.bounds];
-    if (_isLoading) {
-        [self resizePhotoToRect:newFrame contentMode:UIViewContentModeScaleAspectFit animation:nil completion:nil];
-    }else{
-        self.imageView.frame = newFrame;
-    }
-    _isLoading = NO;
-}
-
-- (CGRect)getThumbnailRect{
-    return CGRectMake(self.bounds.size.width/2.0 - 50, self.bounds.size.height/2.0 - 80, 100, 100);
+- (CGRect)getThumbnailRectWithSize:(CGSize)size{
+    return CGRectMake(self.bounds.size.width/2.0 - size.width/2.0, self.bounds.size.height/2.0 - size.height/2.0, size.width, size.height);
 }
 
 
@@ -146,6 +181,9 @@
 #pragma mark - reize Image View
 
 - (CGRect)getRightFrameOfImage:(UIImage *)image InRect:(CGRect)rect{
+    if (!image) {
+        return CGRectZero;
+    }
     CGFloat height = rect.size.height;
     CGFloat width = rect.size.width;
     
@@ -165,7 +203,7 @@
 
 
 - (void)resizePhotoToRect:(CGRect )frame contentMode:(UIViewContentMode)contentMode animation:(void (^)(void))animation completion:(void (^)(void))completion{
-    
+
     [UIView animateWithDuration:0.3 delay:0 options:UIViewAnimationOptionCurveEaseOut animations:^{
         self.imageView.contentMode = contentMode;
         self.imageView.frame = frame;
@@ -186,13 +224,7 @@
 
 
 
-- (void)dismissToRect:(CGRect)rect animation:(void (^)(void))animation{
-    [self resizePhotoToRect:[self convertRect:rect fromView:nil] contentMode:self.contentMode animation:^{
-        self.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0];
-        self.superview.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0];
-        animation();
-    } completion:nil];
-}
+
 
 - (void)scaleToOriginalSize{
     self.zoomScale = 1;

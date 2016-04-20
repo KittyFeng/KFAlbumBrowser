@@ -11,8 +11,9 @@
 
 @protocol  KFPhotoCellDelegate <NSObject>
 
-- (void)requestImage:(KFPhoto *)photo inPhotoViewer:(KFPhotoViewer *)photoViewer;
+@optional
 - (void)tapImage:(KFPhoto *)photo inPhotoViewer:(KFPhotoViewer *)photoViewer;
+
 @end
 
 

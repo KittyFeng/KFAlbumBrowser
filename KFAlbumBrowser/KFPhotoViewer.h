@@ -33,12 +33,23 @@ typedef void(^KFPhotoTap)(KFPhotoViewer *photoViewer);
 - (void)makeAnimationWithImage:(UIImage *)largeImage
                       fromRect:(CGRect)rect;
 
+
 - (void)dismissToRect:(CGRect)rect animation:(void (^)(void))animation;
 
-    
-- (void)setImage:(UIImage *)image isLoading:(BOOL)isLoading;
 
+//默认为充满屏幕大小
+- (void)setImage:(UIImage *)image animation:(BOOL)animation;
+
+//默认图片在中心
+- (void)setImage:(UIImage *)image withSize:(CGSize)size animation:(BOOL)animation;
+
+- (void)setImage:(UIImage *)image withFrame:(CGRect)frame animation:(BOOL)animation;
+
+
+- (void)startLoadingWithHud:(BOOL)hasHud;
+- (void)stopLoading;
 - (void)setLoadingProgress:(CGFloat)progress;
+
 
 - (void)scaleToOriginalSize;
 

@@ -17,7 +17,7 @@
     UIViewController *fromViewController = [transitionContext viewControllerForKey:UITransitionContextFromViewControllerKey];
     
     [UIView animateWithDuration:self.duration delay:0 options:0 animations:^{
-        fromViewController.view.alpha = 0;
+        fromViewController.view.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0];
     } completion:^(BOOL finished) {
         [fromViewController removeFromParentViewController];
         [transitionContext completeTransition:YES];

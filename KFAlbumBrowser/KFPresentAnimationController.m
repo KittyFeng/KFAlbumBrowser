@@ -19,10 +19,10 @@
     UIViewController *toViewController = [transitionContext viewControllerForKey:UITransitionContextToViewControllerKey];
     UIView *container = [transitionContext containerView];
     [container addSubview:toViewController.view];
-    toViewController.view.alpha = 0;
+    toViewController.view.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0];
     
     [UIView animateWithDuration:self.duration delay:0 options:0 animations:^{
-        toViewController.view.alpha = 1;
+        toViewController.view.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:1];
     }  completion:^(BOOL finished) {
         [transitionContext completeTransition:YES];
     } ];
