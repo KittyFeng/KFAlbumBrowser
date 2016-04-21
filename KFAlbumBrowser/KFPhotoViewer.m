@@ -138,11 +138,13 @@
 - (void)stopLoading{
     [self unlockZoom];
     _isLoading = NO;
-    //setprogress
-}
-- (void)setLoadingProgress:(CGFloat)progress{
     //hide
     //remove
+    
+}
+- (void)setLoadingProgress:(CGFloat)progress{
+    //setprogress
+    
 }
 
 #pragma mark - private methods
@@ -203,7 +205,7 @@
 
 
 - (void)resizePhotoToRect:(CGRect )frame contentMode:(UIViewContentMode)contentMode animation:(void (^)(void))animation completion:(void (^)(void))completion{
-
+    [self lockZoom];
     [UIView animateWithDuration:0.3 delay:0 options:UIViewAnimationOptionCurveEaseOut animations:^{
         self.imageView.contentMode = contentMode;
         self.imageView.frame = frame;
@@ -213,6 +215,7 @@
     } completion:^(BOOL finished) {
         if (finished) {
             if (completion) {
+                [self unlockZoom];
                  completion();
             }
         }

@@ -11,7 +11,6 @@
 #import "SDWebImageManager.h"
 #import "KFDismissAnimationController.h"
 #import "KFPresentAnimationController.h"
-#import "UIImageView+WebCache.h"
 #import "SDWebImagePrefetcher.h"
 
 #define collectionCellIdentifier @"photoCell"
