@@ -65,8 +65,6 @@
     flowLayout.sectionInset = UIEdgeInsetsMake(0, 8, 0, 8);
     
     UICollectionView *collectionView = [[UICollectionView alloc]initWithFrame:CGRectMake(-8, 0, self.view.bounds.size.width + 16, self.view.bounds.size.height) collectionViewLayout:flowLayout];
-    collectionView.delegate = self;
-    collectionView.dataSource = self;
     collectionView.backgroundColor = [UIColor blackColor];
     collectionView.dataSource = self;
     collectionView.delegate = self;

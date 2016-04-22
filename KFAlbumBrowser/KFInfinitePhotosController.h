@@ -10,5 +10,7 @@
 
 @interface KFInfinitePhotosController : UIViewController
 
+@property (nonatomic,strong) NSMutableArray *photos;
+//@property (nonatomic,strong)
 
 @end
