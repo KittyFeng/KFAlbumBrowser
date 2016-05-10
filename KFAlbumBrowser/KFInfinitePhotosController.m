@@ -60,6 +60,8 @@
     pageCtrl.hidesForSinglePage = YES;
     [self.view addSubview:pageCtrl];
     self.pageCtrl = pageCtrl;
+    
+    
 }
 
 - (void)showStartImage{

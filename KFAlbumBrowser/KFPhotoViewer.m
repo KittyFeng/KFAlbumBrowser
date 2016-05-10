@@ -7,9 +7,6 @@
 //
 
 #import "KFPhotoViewer.h"
-#import "KFPhoto.h"
-#import "UIImageView+WebCache.h"
-#import "SDImageCache.h"
 
 
 @interface KFPhotoViewer ()<UIScrollViewDelegate>{
@@ -214,8 +211,8 @@
         }
     } completion:^(BOOL finished) {
         if (finished) {
+            [self unlockZoom];
             if (completion) {
-                [self unlockZoom];
                  completion();
             }
         }
